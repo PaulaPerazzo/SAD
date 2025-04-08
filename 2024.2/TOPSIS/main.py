@@ -1,6 +1,6 @@
 import numpy as np
 import json
-from typing import Dict, List, Union, Optional
+from typing import Dict, Union, Optional
 
 class TOPSIS:
     """
@@ -73,44 +73,28 @@ class TOPSIS:
                 raise ValueError(f"Performance values for {alt} don't match number of criteria")
     
     def calculate(self) -> Dict:
-        """
-        Perform the TOPSIS analysis and return results.
-        
-        Returns:
-            Dictionary containing:
-            - positive_ideal_solution
-            - negative_ideal_solution
-            - distance_to_pis
-            - distance_to_nis
-            - topsis_score
-            - ranking
-        """
         params = self.input_data['parameters']
         
-        # Extract and prepare data
         self.alternatives = params['alternatives']
         self.criteria = params['criteria']
         self.criteria_types = params['criteria_types']
         self.weights = np.array([params['weights'][c] for c in self.criteria])
         
-        # Get distance metric from parameters (default to euclidean if not specified)
         distance_metric = params.get('distance_metric', '2').lower()
         
-        # Convert performance matrix to numpy array
         self.matrix_d = np.array([params['performance_matrix'][alt] for alt in self.alternatives])
         self.n_alt, self.n_crit = self.matrix_d.shape
         
-        # Normalize and weight the matrix
-        self._normalize_matrix()
-        self._apply_weights()
+        self._normalize_matrix()     
+        self._apply_weights()        
+        self._calculate_ideal_solutions()  
         
-        # Calculate solutions
-        self._calculate_ideal_solutions()
         self._calculate_distances(distance_metric)
         self._calculate_closeness()
         self._calculate_ranking()
         
         return self._prepare_results()
+
     
     def _normalize_matrix(self):
         """Normalize the decision matrix."""
@@ -193,3 +177,12 @@ class TOPSIS:
     def to_json(self) -> str:
         """Return results as JSON string."""
         return json.dumps(self.calculate(), indent=2)
+
+if __name__ == "__main__":
+    file_name = "data.json"
+    
+    with open(file_name, 'r') as file:
+        input_data = json.load(file)
+    
+    topsis = TOPSIS(input_data)
+    print(topsis.to_json())
